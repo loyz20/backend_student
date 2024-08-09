@@ -19,6 +19,8 @@ func SetupRoutes(r *gin.Engine) {
 		{
 			// Tambahkan rute yang memerlukan autentikasi di sini
 			// auth.GET("/profile", controllers.Profile)
+			auth.POST("/attendance", controllers.CreateAttendance)
+			auth.GET("/attendance/report/:username", controllers.GetMonthlyReport)
 		}
 	}
 }
