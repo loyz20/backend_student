@@ -15,8 +15,8 @@ type AuthController struct {
 }
 
 // NewAuthController creates a new instance of AuthController
-func NewAuthController(authService *services.AuthService) *AuthController {
-	return &AuthController{authService: authService}
+func NewAuthController(authService *services.AuthService, refreshTokenService *services.RefreshTokenService) *AuthController {
+	return &AuthController{authService: authService, refreshTokenService: refreshTokenService}
 }
 
 // Register handles user registration
@@ -37,6 +37,25 @@ func (ctrl *AuthController) Register(c *gin.Context) {
 	}
 
 	utils.RespondJSON(c, http.StatusOK, "success", "User registered successfully", nil)
+}
+
+func (ctrl *AuthController) VerifyStudent(c *gin.Context) {
+	var request struct {
+		studentid string `json:"id"`
+	}
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "Invalid input", err)
+		return
+	}
+
+	verify, err := ctrl.authService.GetStudentByID(request.studentid)
+	if err != nil {
+		utils.RespondError(c, http.StatusUnauthorized, "Invalid credentials", err)
+		return
+	}
+
+	utils.RespondJSON(c, http.StatusOK, "success", "Login successful", gin.H{"verify": verify})
 }
 
 // Login handles user login and returns a JWT token

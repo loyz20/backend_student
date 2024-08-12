@@ -8,13 +8,13 @@ import (
 
 // StudentRepository defines the repository interface
 type StudentRepository interface {
-	Create(Student *models.Student) error
+	Create(student *models.Student) error
 	FindByID(id string) (*models.Student, error)
-	Update(Student *models.Student) error
+	Update(student *models.Student) error
 	Delete(id string) error
 }
 
-// StudentRepository implements StudentRepository interface
+// studentRepository implements StudentRepository interface
 type studentRepository struct {
 	db *gorm.DB
 }
@@ -25,24 +25,24 @@ func NewStudentRepository(db *gorm.DB) StudentRepository {
 }
 
 // Create inserts a new Student into the database
-func (r *studentRepository) Create(Student *models.Student) error {
-	result := r.db.Create(Student)
+func (r *studentRepository) Create(student *models.Student) error {
+	result := r.db.Create(student)
 	return result.Error
 }
 
 // FindByID retrieves a Student by ID
 func (r *studentRepository) FindByID(id string) (*models.Student, error) {
-	var Student models.Student
-	result := r.db.First(&Student, "id = ?", id)
+	var student models.Student
+	result := r.db.First(&student, "studentid = ?", id)
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	return &Student, nil
+	return &student, nil
 }
 
 // Update updates an existing Student
-func (r *studentRepository) Update(Student *models.Student) error {
-	result := r.db.Save(Student)
+func (r *studentRepository) Update(student *models.Student) error {
+	result := r.db.Save(student)
 	return result.Error
 }
 

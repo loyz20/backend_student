@@ -17,8 +17,10 @@ func SetupRoutes(r *gin.Engine) {
 	studentController := controllers.NewStudentController(studentService)
 
 	userRepo := repository.NewUserRepository(config.DB)
-	authService := services.NewAuthService(userRepo)
-	authController := controllers.NewAuthController(authService)
+	tokenRepo := repository.NewRefreshTokenRepository(config.DB)
+	authService := services.NewAuthService(userRepo, studentRepo)
+	tokenSevice := services.NewRefreshTokenService(tokenRepo)
+	authController := controllers.NewAuthController(authService, tokenSevice)
 
 	attendanceRepo := repository.NewAttendanceRepository(config.DB)
 	attendanceService := services.NewAttendanceService(attendanceRepo)
@@ -48,6 +50,7 @@ func SetupRoutes(r *gin.Engine) {
 	{
 		authGroup.POST("/register", authController.Register)
 		authGroup.POST("/login", authController.Login)
+		authGroup.POST("/verify-student", authController.VerifyStudent)
 		authGroup.POST("/refresh-token", authController.RefreshToken)
 	}
 }
