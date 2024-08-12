@@ -51,7 +51,7 @@ func SetupRoutes(r *gin.Engine) {
 
 	// Create a new route group for students
 	studentGroup := r.Group("/students")
-	studentGroup.Use(middleware.AuthMiddleware()) // Apply your middleware here
+	//studentGroup.Use(middleware.AuthMiddleware()) // Apply your middleware here
 	{
 		studentGroup.POST("/", studentController.CreateStudent)
 		studentGroup.GET("/:id", studentController.GetStudent)

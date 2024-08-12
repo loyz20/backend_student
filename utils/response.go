@@ -25,11 +25,9 @@ func RespondJSON(c *gin.Context, statusCode int, status string, message string, 
 }
 
 func RespondError(c *gin.Context, statusCode int, message string, err error) {
-	response := Response{
-		Status:  "error",
-		Message: message,
-		Error:   err.Error(),
-		Time:    time.Now().Format(time.RFC3339),
+	if err != nil {
+		c.JSON(statusCode, gin.H{"status": "error", "message": message, "error": err.Error()})
+	} else {
+		c.JSON(statusCode, gin.H{"status": "error", "message": message})
 	}
-	c.JSON(statusCode, response)
 }

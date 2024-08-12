@@ -2,8 +2,10 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"os"
 
+	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -21,6 +23,11 @@ func InitializeConfig() {
 	if JwtSecret == nil {
 		fmt.Println("JWT_SECRET is not set")
 		return
+	}
+
+	errenv := godotenv.Load()
+	if errenv != nil {
+		log.Fatal("Error loading .env file")
 	}
 
 	// Load database connection parameters from environment variables
@@ -41,4 +48,16 @@ func InitializeConfig() {
 	}
 
 	fmt.Println("Database connection established")
+
+	err = DB.AutoMigrate(
+	// &models.User{},
+	// &models.Class{},
+	// &models.Student{},
+	// &models.Attendance{},
+	// &models.StudentClass{},
+	// &models.RefreshToken{},
+	)
+	if err != nil {
+		log.Fatalf("AutoMigrate failed: %v", err)
+	}
 }

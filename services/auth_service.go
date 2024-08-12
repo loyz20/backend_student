@@ -35,7 +35,27 @@ func (service *AuthService) RegisterUser(username, password string) error {
 
 	// Create the user
 	user := &models.User{Username: username, Password: string(hashedPassword)}
-	return service.userRepo.CreateUser(user)
+	if err := service.userRepo.CreateUser(user); err != nil {
+		return err
+	}
+
+	// Find student by username
+	student, err := service.studentRepo.FindByUsername(username)
+	if err != nil {
+		return err
+	}
+
+	if student == nil {
+		return errors.New("student not found")
+	}
+
+	// Update student's username
+	student.Username = username
+	if err := service.studentRepo.Update(student); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // AuthenticateUser authenticates a user by checking password

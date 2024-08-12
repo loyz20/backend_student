@@ -10,6 +10,7 @@ import (
 type StudentRepository interface {
 	Create(student *models.Student) error
 	FindByID(id string) (*models.Student, error)
+	FindByUsername(username string) (*models.Student, error)
 	Update(student *models.Student) error
 	Delete(id string) error
 }
@@ -33,7 +34,18 @@ func (r *studentRepository) Create(student *models.Student) error {
 // FindByID retrieves a Student by ID
 func (r *studentRepository) FindByID(id string) (*models.Student, error) {
 	var student models.Student
-	result := r.db.First(&student, "studentid = ?", id)
+	result := r.db.First(&student, "student_id = ?", id)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &student, nil
+
+}
+
+// FindByID retrieves a Student by ID
+func (r *studentRepository) FindByUsername(username string) (*models.Student, error) {
+	var student models.Student
+	result := r.db.First(&student, "student_id = ?", username)
 	if result.Error != nil {
 		return nil, result.Error
 	}
