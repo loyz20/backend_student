@@ -41,7 +41,7 @@ func (ctrl *AuthController) Register(c *gin.Context) {
 
 func (ctrl *AuthController) VerifyStudent(c *gin.Context) {
 	var request struct {
-		studentid string `json:"id"`
+		Studentid string `json:"id"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -49,7 +49,7 @@ func (ctrl *AuthController) VerifyStudent(c *gin.Context) {
 		return
 	}
 
-	verify, err := ctrl.authService.GetStudentByID(request.studentid)
+	verify, err := ctrl.authService.GetStudentByID(request.Studentid)
 	if err != nil {
 		utils.RespondError(c, http.StatusUnauthorized, "Invalid credentials", err)
 		return

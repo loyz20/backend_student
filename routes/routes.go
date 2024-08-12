@@ -16,6 +16,10 @@ func SetupRoutes(r *gin.Engine) {
 	studentService := services.NewStudentService(studentRepo)
 	studentController := controllers.NewStudentController(studentService)
 
+	classRepo := repository.NewClassRepository(config.DB)
+	classService := services.NewClassService(classRepo)
+	classController := controllers.NewClassController(classService)
+
 	userRepo := repository.NewUserRepository(config.DB)
 	tokenRepo := repository.NewRefreshTokenRepository(config.DB)
 	authService := services.NewAuthService(userRepo, studentRepo)
@@ -33,6 +37,16 @@ func SetupRoutes(r *gin.Engine) {
 		attendanceGroup.GET("/:id", attendanceController.GetAttendance)
 		attendanceGroup.PUT("/:id", attendanceController.UpdateAttendance)
 		attendanceGroup.DELETE("/:id", attendanceController.DeleteAttendance)
+	}
+
+	// Create a new route group for class
+	classGroup := r.Group("/class")
+	// classGroup.Use(middleware.AuthMiddleware()) // Apply your middleware here
+	{
+		classGroup.POST("/", classController.CreateClass)
+		classGroup.GET("/:id", classController.GetClass)
+		classGroup.PUT("/:id", classController.UpdateClass)
+		classGroup.DELETE("/:id", classController.DeleteClass)
 	}
 
 	// Create a new route group for students
