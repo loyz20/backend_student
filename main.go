@@ -1,30 +1,22 @@
 package main
 
 import (
-	"backend_student/database"
-	"backend_student/middleware"
+	"backend_student/config"
 	"backend_student/routes"
-	"log"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	// Setup Database
-	database.SetupDatabase()
-	database.Migrate()
+	// Initialize configuration
+	config.InitializeConfig()
 
-	// Setup Gin
+	// Create a new Gin router
 	r := gin.Default()
 
-	// Setup CORS Middleware
-	r.Use(middleware.CORS())
-
-	// Setup Routes
+	// Setup routes
 	routes.SetupRoutes(r)
 
-	// Run the server
-	if err := r.Run(":8080"); err != nil {
-		log.Fatal("server failed:", err)
-	}
+	// Start the server
+	r.Run(":8080")
 }

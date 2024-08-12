@@ -3,18 +3,13 @@ package models
 import "time"
 
 type Attendance struct {
-	ID             uint      `json:"id" gorm:"primary_key"`
-	Username       string    `json:"username"`
-	Latitude       float64   `json:"latitude"`
-	Longitude      float64   `json:"longitude"`
-	PhotoURL       string    `json:"photo_url"`
-	IsWithinRadius bool      `json:"is_within_radius"`
-	CreatedAt      time.Time `json:"created_at"`
-}
-
-type MonthlyReport struct {
-	Present int `json:"present"`
-	Sick    int `json:"sick"`
-	Leave   int `json:"leave"`
-	Absent  int `json:"absent"`
+	ID             uint      `gorm:"primaryKey"`
+	StudentID      string    `gorm:"not null"`
+	Student        Student   `gorm:"foreignKey:StudentID;references:StudentID"`
+	AttendanceDate time.Time `gorm:"not null"`
+	AttendanceType string    `gorm:"not null"`  // "masuk" or "pulang"
+	Status         string    `gorm:"not null"`  // "hadir", "sakit", "izin", "tanpa keterangan"
+	LateMinutes    int       `gorm:"default:0"` // jumlah menit keterlambatan
+	Location       string    `gorm:"type:text"`
+	SelfieImageUrl string
 }

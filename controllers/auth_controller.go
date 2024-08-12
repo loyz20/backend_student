@@ -1,88 +1,94 @@
 package controllers
 
 import (
-	"backend_student/database"
-	"backend_student/models"
+	"backend_student/services"
+	"backend_student/utils"
 	"net/http"
-	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 )
 
-const secretKey = "your_secret_key" // Ganti dengan secret key yang lebih aman
-
-type LoginResponse struct {
-	Status  string `json:"status"`
-	Message string `json:"message"`
-	Data    struct {
-		Token string `json:"token"`
-	} `json:"data"`
+// AuthController defines the structure for authentication controller
+type AuthController struct {
+	authService         *services.AuthService
+	refreshTokenService *services.RefreshTokenService
 }
 
-type ErrorResponse struct {
-	Status  string `json:"status"`
-	Code    string `json:"code"`
-	Message string `json:"message"`
+// NewAuthController creates a new instance of AuthController
+func NewAuthController(authService *services.AuthService) *AuthController {
+	return &AuthController{authService: authService}
 }
 
-func Login(c *gin.Context) {
-	var input models.User
-	if err := c.BindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, ErrorResponse{
-			Status:  "error",
-			Code:    "INVALID_INPUT",
-			Message: "Invalid input: " + err.Error(),
-		})
+// Register handles user registration
+func (ctrl *AuthController) Register(c *gin.Context) {
+	var request struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "Invalid input", err)
 		return
 	}
 
-	var user models.User
-	if err := database.DB.Where("username = ?", input.Username).First(&user).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, ErrorResponse{
-			Status:  "error",
-			Code:    "INVALID_CREDENTIALS",
-			Message: "Invalid username or password",
-		})
+	if err := ctrl.authService.RegisterUser(request.Username, request.Password); err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to register user", err)
 		return
 	}
 
-	if !user.CheckPassword(input.Password) {
-		c.JSON(http.StatusUnauthorized, ErrorResponse{
-			Status:  "error",
-			Code:    "INVALID_CREDENTIALS",
-			Message: "Invalid username or password",
-		})
+	utils.RespondJSON(c, http.StatusOK, "success", "User registered successfully", nil)
+}
+
+// Login handles user login and returns a JWT token
+func (ctrl *AuthController) Login(c *gin.Context) {
+	var request struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "Invalid input", err)
 		return
 	}
 
-	token, err := generateToken(user.Username)
+	isAuthenticated, err := ctrl.authService.AuthenticateUser(request.Username, request.Password)
+	if err != nil || !isAuthenticated {
+		utils.RespondError(c, http.StatusUnauthorized, "Invalid credentials", err)
+		return
+	}
+
+	token, err := utils.GenerateToken(request.Username)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, ErrorResponse{
-			Status:  "error",
-			Code:    "TOKEN_GENERATION_FAILED",
-			Message: "Could not generate token",
-		})
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to generate token", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, LoginResponse{
-		Status:  "success",
-		Message: "Login successful",
-		Data: struct {
-			Token string `json:"token"`
-		}{
-			Token: token,
-		},
-	})
+	utils.RespondJSON(c, http.StatusOK, "success", "Login successful", gin.H{"token": token})
 }
 
-func generateToken(username string) (string, error) {
-	claims := jwt.MapClaims{
-		"username": username,
-		"exp":      time.Now().Add(time.Hour * 1).Unix(),
+// RefreshToken handles refresh token requests
+func (ctrl *AuthController) RefreshToken(c *gin.Context) {
+	var request struct {
+		RefreshToken string `json:"refresh_token"`
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(secretKey))
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "Invalid input", err)
+		return
+	}
+
+	userID, err := ctrl.refreshTokenService.ValidateRefreshToken(request.RefreshToken)
+	if err != nil {
+		utils.RespondError(c, http.StatusUnauthorized, "Invalid refresh token", err)
+		return
+	}
+
+	// Generate new access token
+	newToken, err := utils.GenerateToken(userID)
+	if err != nil {
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to generate token", err)
+		return
+	}
+
+	utils.RespondJSON(c, http.StatusOK, "success", "Token refreshed successfully", gin.H{"token": newToken})
 }
